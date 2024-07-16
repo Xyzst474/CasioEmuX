@@ -139,8 +139,9 @@ int main(int argc, char *argv[]) {
         });
 
         bool guiCreated = false;
+        bool guiHidden  = argv_map.find("hidegui") != argv_map.end();
         std::thread t1([&]() {
-            test_gui(&guiCreated);
+            test_gui(&guiCreated, guiHidden);
             while (1) {
                 SDL_Event event;
                 gui_loop();
