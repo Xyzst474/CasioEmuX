@@ -55,8 +55,14 @@ void gui_loop(){
     ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
     SDL_RenderPresent(renderer);
 }
-int test_gui(bool* guiCreated){
+int test_gui(bool* guiCreated, bool guiHidden){
     //SDL_Delay(1000*5);
+    if (guiHidden) 
+    {
+        SDL_Log("Debugger GUI disabled with \"hidegui\" switch");
+        window_flags = (SDL_WindowFlags)(window_flags | SDL_WINDOW_HIDDEN);
+    }
+
     window = SDL_CreateWindow("CasioEmuX", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
     if (renderer == nullptr)

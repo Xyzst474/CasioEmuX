@@ -35,6 +35,7 @@ Supported values of `key` are: (if `value` is not mentioned then it does not mat
 * `resizable`: Whether the window can be resized.
 * `width`, `height`: Initial window width/height on program start. The values can be in hexadecimal (prefix `0x`), octal (prefix `0`) or decimal.
 * `exit_on_console_shutdown`: Exit the emulator when the console thread is shut down.
+* `hidegui`: Don't show debugger windows.
 
 Note that passing an argument at least twice will cause the program to panic.
 
