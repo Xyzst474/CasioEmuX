@@ -1,0 +1,27 @@
+#include <windows.h>
+
+// Icon resource
+MAINICON ICON "mainicon.ico"
+
+
+// Version information
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION 0,1
+PRODUCTVERSION 0,1
+FILETYPE VFT_APP
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0" //0409xxxx - U.S. English  // xxxx04B0 - (1200) Unicode Character Set
+        BEGIN
+            VALUE "FileDescription", "CasioEmuX\0"
+            VALUE "ProductName", "CasioEmuX\0"
+            VALUE "ProductVersion", "0.1\0"
+            VALUE "LegalCopyright", "github.com/Xyzstk\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0409, 1200
+    END
+END
