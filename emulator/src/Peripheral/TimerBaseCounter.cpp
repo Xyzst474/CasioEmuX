@@ -9,18 +9,19 @@ namespace casioemu
     void TimerBaseCounter::Initialise() {
         clock_type = CLOCK_LSCLK;
 
-        LTBRCounter = 0;
         current_output = 0;
         LTBR_reset_tick = false;
     }
 
     void TimerBaseCounter::Reset() {
-        LTBRCounter = 0;
         current_output = 0;
         LTBR_reset_tick = false;
     }
 
     void TimerBaseCounter::Tick() {
+        emulator.chipset.LTBC_H = (emulator.chipset.LTBC_H + 1) & 0x7F;
+        emulator.chipset.LSCLK_output_H = (emulator.chipset.LTBC_H - 1) & (~emulator.chipset.LTBC_H);
+
         if(LTBR_reset_tick) {
             LTBR_reset_tick = false;
             return;
@@ -28,8 +29,7 @@ namespace casioemu
 
         emulator.chipset.LSCLK_output = 0;
 
-        if(++LTBRCounter >= LTBROutputCount) {
-            LTBRCounter = 0;
+        if(emulator.chipset.LSCLK_output_H & 0x40) {
             emulator.chipset.data_LTBR++;
             current_output = emulator.chipset.LSCLK_output = (emulator.chipset.data_LTBR - 1) & (~emulator.chipset.data_LTBR);
             
@@ -45,7 +45,6 @@ namespace casioemu
     }
 
     void TimerBaseCounter::ResetLSCLK() {
-        LTBRCounter = 0;
         emulator.chipset.LSCLK_output = 0xFF;
         LTBR_reset_tick = true;
 

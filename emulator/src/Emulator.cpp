@@ -31,7 +31,7 @@ namespace casioemu
 			PANIC("Unknown hardware id %d\n", hardware_id);
 		this->hardware_id = (HardwareId)hardware_id;
 
-		cycles_per_second = hardware_id == HW_ES_PLUS ? 128 * 1024 * 2 : hardware_id == HW_CLASSWIZ ? 1024 * 1024 * 2 : 2048 * 1024 * 2;
+		cycles_per_second = hardware_id == HW_ES_PLUS ? 512 * 1024 : hardware_id == HW_CLASSWIZ ? 2 * 1024 * 1024: 4 * 1024 * 1024;
 		timer_interval = 20;
 
 		cycles.Setup(cycles_per_second, timer_interval);

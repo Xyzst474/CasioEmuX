@@ -111,6 +111,11 @@ namespace casioemu
 		//0.5Hz-64Hz Low Speed Clock output.Corresponding bit is set to 1 on output and got reset on the next LSCLK tick.
 		uint8_t LSCLK_output;
 
+		//128Hz-8kHz Low Speed Clock output.Not present to user application.Bit 7 is fixed to 0.
+		//Refer to the 'Timer Base Counter' chapter in any of the MCU User's Manuals.
+		uint8_t LTBC_H;
+		uint8_t LSCLK_output_H;
+
 		//64Hz-8kHz output.
 		uint8_t HSCLK_output;
 		

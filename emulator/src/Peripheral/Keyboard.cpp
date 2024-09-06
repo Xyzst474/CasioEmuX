@@ -646,12 +646,8 @@ namespace casioemu
 					had_effect = true;
 			}
 		}
-		if (had_effect)
-		{
-			require_frame = true;
-			if (real_hardware)
-				RecalculateGhost();
-		}
+		require_frame = true;
+		if (had_effect && real_hardware)
+			RecalculateGhost();
 	}
 }
-

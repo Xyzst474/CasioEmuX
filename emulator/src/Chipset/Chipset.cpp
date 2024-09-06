@@ -85,18 +85,19 @@ namespace casioemu
 		}, [](MMURegion *region, size_t offset, uint8_t data) {
 			offset -= region->base;
 			Chipset *chipset = (Chipset*)region->userdata;
-			size_t mask = (1 << (chipset->EffectiveMICount + 1)) - (chipset->WDT_enabled ? 1 : 2);
+			//size_t mask = (1 << (chipset->EffectiveMICount + 1)) - (chipset->WDT_enabled ? 1 : 2);
+			size_t mask = (1 << (chipset->EffectiveMICount + 1)) - 2;
 			chipset->data_int_mask = (chipset->data_int_mask & (~(0xFF << (offset * 8)))) | (data << (offset * 8));
 			chipset->data_int_mask &= mask;
 			for(size_t i = 0; i < chipset->EffectiveMICount; i++) {
 				chipset->MaskableInterrupts[i].SetEnabled(chipset->data_int_mask & (1 << (i + 1)));
 			}
-			if(chipset->data_int_mask & 1) {
+			/*if(chipset->data_int_mask & 1) {
 				if(chipset->GetInterruptPendingSFR(4))
 					chipset->RaiseNonmaskable();
 			} else {
 				chipset->ResetNonmaskable();
-			}
+			}*/
 		}, emulator);
 
 		region_int_pending.Setup(0xF014, 4, "Chipset/InterruptPending", this, [](MMURegion *region, size_t offset) {
@@ -106,7 +107,8 @@ namespace casioemu
 		}, [](MMURegion *region, size_t offset, uint8_t data) {
 			offset -= region->base;
 			Chipset *chipset = (Chipset*)region->userdata;
-			size_t mask = (1 << (chipset->EffectiveMICount + 1)) - (chipset->WDT_enabled ? 1 : 2);
+			//size_t mask = (1 << (chipset->EffectiveMICount + 1)) - (chipset->WDT_enabled ? 1 : 2);
+			size_t mask = (1 << (chipset->EffectiveMICount + 1)) - 1;
 			chipset->data_int_pending = (chipset->data_int_pending & (~(0xFF << (offset * 8)))) | (data << (offset * 8));
 			chipset->data_int_pending &= mask;
 			for(size_t i = 0; i < chipset->EffectiveMICount; i++) {
@@ -116,8 +118,9 @@ namespace casioemu
 					chipset->MaskableInterrupts[i].ResetInt();
 			}
 			if(chipset->data_int_pending & 1) {
-				if(chipset->data_int_mask & 1)
-					chipset->RaiseNonmaskable();
+				/*if(chipset->data_int_mask & 1)
+					chipset->RaiseNonmaskable();*/
+				chipset->RaiseNonmaskable();
 			} else {
 				chipset->ResetNonmaskable();
 			}
@@ -236,8 +239,10 @@ namespace casioemu
 	void Chipset::ResetClockGenerator() {
 		data_FCON = 0;
 		data_LTBR = 0;
+		LTBC_H = 0;
 		data_HTBR = 0;
 		LSCLK_output = 0;
+		LSCLK_output_H = 0;
 		HSCLK_output = 0;
 		data_LTBADJ = 0;
 
@@ -406,8 +411,9 @@ namespace casioemu
 
 	void Chipset::RequestNonmaskable() {
 		SetInterruptPendingSFR(INT_NONMASKABLE, true);
-		if (data_int_mask & 1)
-			RaiseNonmaskable();
+		/*if (data_int_mask & 1)
+			RaiseNonmaskable();*/
+		RaiseNonmaskable();
 	}
 
 	void Chipset::RaiseNonmaskable()

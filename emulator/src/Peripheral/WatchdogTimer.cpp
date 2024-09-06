@@ -5,14 +5,9 @@
 #include "../Emulator.hpp"
 #include "../Chipset/Chipset.hpp"
 
-#include <cmath>
-
 namespace casioemu
 {
     void WatchdogTimer::Initialise() {
-        //Watchdog timer is normally disabled in casio calculators, but in some models parts of its function is reserved.
-        clock_type = emulator.chipset.WDT_enabled ? CLOCK_HSCLK : CLOCK_STOPPED;
-
         data_WDTCON = 0;
         data_WDTMOD = 2;
 
@@ -29,20 +24,22 @@ namespace casioemu
             if(wdt->data_WDP && wdt->data_WDTCON == 0x5A && data == 0xA5) {
                 wdt->WDT_counter = 0;
                 wdt->overflow_count = false;
+
+                //In Classwiz II series, WDT starts counting at the first clear after reset.
+                if (wdt->emulator.hardware_id == HW_CLASSWIZ_II) wdt->clock_type = CLOCK_LSCLK;
             }
             wdt->data_WDP = !wdt->data_WDP;
             wdt->data_WDTCON = data;
         }, emulator);
 
-        if(emulator.hardware_id == HW_CLASSWIZ_II) {
+        if(emulator.hardware_id == HW_CLASSWIZ_II)
             region_WDTMOD.Setup(0xF00F, 1, "WatchdogTimer/WDTMOD", &data_WDTMOD, MMURegion::DefaultRead<uint8_t, 0x03>, MMURegion::DefaultWrite<uint8_t, 0x03>, emulator);
-        }
     }
 
     void WatchdogTimer::Tick() {
-        //Accept 256Hz output
-        if(emulator.chipset.HSCLK_output & 0x20) {
-            if(++WDT_counter >= 32 * std::pow(4, data_WDTMOD)) {
+        //Accept 256Hz LSCLK output
+        if(emulator.chipset.LSCLK_output_H & 0x20) {
+            if (++WDT_counter >= 1 << ((data_WDTMOD << 1) + 5)) {
                 if(!overflow_count) {
                     emulator.chipset.RequestNonmaskable();
                     data_WDTCON = 0;
@@ -57,6 +54,9 @@ namespace casioemu
     }
 
     void WatchdogTimer::Reset() {
+        //Watchdog timer is normally disabled in casio calculators, but in some models parts of its function is reserved.
+        clock_type = emulator.chipset.WDT_enabled ? CLOCK_LSCLK : CLOCK_STOPPED;
+
         data_WDTCON = 0;
         data_WDTMOD = 2;
 
