@@ -8,22 +8,30 @@ namespace casioemu
 {
 	class BCDCalc : public Peripheral
 	{
-		MMURegion region_bcdcontrol, region_F402, region_F404, region_F405, region_F410, region_F414, region_F415, region_param1, region_param2, region_temp1, region_temp2;
+		MMURegion region_BCDCMD, region_BCDCON, region_BCDMCN, region_BCDMCR, region_BCDFLG, region_BCDLLZ, region_BCDMLZ,
+			region_BCDREGA, region_BCDREGB, region_BCDREGC, region_BCDREGD;
 
-		uint8_t data_F400, data_F402, data_F404, data_F405, data_F410, data_F414, data_F415;
+		uint8_t data_BCDCMD, data_BCDCON, data_BCDMCN, data_BCDLLZ, data_BCDMLZ;
+		uint8_t BCDREG[4][12];
 
-		uint8_t data_param1[12];
-		uint8_t data_param2[12];
-		uint8_t data_temp1[12];
-		uint8_t data_temp2[12];
+		uint8_t BCDMCN;
+		bool C_flag, Z_flag, macro_running;
 
-		bool F400_write;
-		bool F402_write;
-		bool F404_write;
-		bool F405_write;
+		uint8_t BCDCMD_req, BCDMCR_req;
+		bool BCDCMD_pend, BCDMCR_pend;
 
-		uint8_t data_operator, data_type_1, data_type_2, param1, param2, param3, param4, data_F404_copy,
-			data_mode, data_repeat_flag, data_a, data_b, data_c, data_d, data_F402_copy, data_F405_copy;
+		uint16_t* current_pgm;
+		size_t pgm_counter;
+
+		static uint8_t ReadReg(MMURegion* region, size_t offset) {
+			offset -= region->base;
+			return ((uint8_t*)region->userdata)[offset];
+		}
+
+		static void WriteReg(MMURegion* region, size_t offset, uint8_t data) {
+			offset -= region->base;
+			((uint8_t*)region->userdata)[offset] = data;
+		}
 
 	public:
 		using Peripheral::Peripheral;
@@ -32,11 +40,10 @@ namespace casioemu
 		void Reset();
 		void Tick();
 
-		void GenerateParams();
-		void F405control();
-		void ShiftLeft(int param);
-		void ShiftRight(int param);
-		void DataOperate();
+		void RunCommand(uint8_t);
+		void StartMacro(uint8_t);
+		void ShiftLeft(uint8_t, uint8_t, bool);
+		void ShiftRight(uint8_t, uint8_t, bool);
 	};
 }
 
