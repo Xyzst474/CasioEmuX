@@ -70,6 +70,67 @@ namespace casioemu
 
 	void BCDCalc::Tick() {
 		if (!macro_running) return;
+
+		fetch:
+		uint16_t inst = current_pgm[pgm_counter];
+		uint8_t offset = (inst >> 8) & 0x1F;
+		uint8_t cond = 0;
+
+		switch (inst >> 13)
+		{
+		case 0:
+			pgm_counter = offset;
+			break;
+		case 1:
+			pgm_counter = (pgm_counter + offset) & 0x1F;
+			break;
+		case 2:
+			pgm_counter++;
+			cond = 1;
+			break;
+		case 3:
+			pgm_counter++;
+			cond = 2;
+			break;
+		case 4:
+			pgm_counter = ((BCDREG[0][0] & 0x0F) + offset) & 0x1F;
+			break;
+		case 5:
+			BCDREG[0][0] = (BCDREG[0][0] & 0xF0) | (pgm_counter & 0x0F);
+			pgm_counter = offset;
+			if (--BCDMCN) goto fetch;
+			macro_running = false;
+			break;
+		case 6:
+			BCDMCN -= offset;
+			pgm_counter &= 0xFC;
+			if (BCDMCN & 0xF8) pgm_counter |= 3;
+			else if (BCDMCN & 0x04) pgm_counter |= 2;
+			else if (BCDMCN & 0x02) pgm_counter |= 1;
+			else if (!BCDMCN) macro_running = false;
+			break;
+		case 7:
+			pgm_counter = offset;
+			if (--BCDMCN) goto fetch;
+			macro_running = false;
+			break;
+		}
+
+		RunCommand(inst & 0xFF);
+		if (cond && ((cond & 1) ^ C_flag)) pgm_counter = offset;
+
+		if (!macro_running) {
+			if (BCDCMD_pend) {
+				emulator.chipset.cpu.cpu_run_stat = true;
+				BCDCMD_pend = false;
+				RunCommand(BCDCMD_req);
+			}
+			if (BCDMCR_pend) {
+				emulator.chipset.cpu.cpu_run_stat = true;
+				BCDMCR_pend = false;
+				StartMacro(BCDMCR_req);
+			}
+		}
 	}
 
 	void BCDCalc::Reset() {
@@ -78,6 +139,9 @@ namespace casioemu
 
 		BCDCMD_req = BCDMCR_req = 0;
 		C_flag = Z_flag = macro_running = BCDCMD_pend = BCDMCR_pend = false;
+
+		current_pgm = nullptr;
+		pgm_counter = 0;
 	}
 
 	void BCDCalc::RunCommand(uint8_t cmd) {
@@ -99,7 +163,7 @@ namespace casioemu
 				op_dst >>= 4;
 				if (op == 2) op1 = (9 - op1) & 0x0F;
 				op2 += op1 + (carry ? 1 : 0);
-				if (carry = (op2 >= 10)) op2 -= 10;
+				if ((carry = op2 >= 10)) op2 -= 10;
 				res |= op2 << (i * 4);
 			}
 			if (op == 2) carry = !carry;
@@ -148,7 +212,11 @@ namespace casioemu
 		}
 
 		data_BCDLLZ = 0;
-		for (int i = 0; i < 2 * data_BCDCON; i++) {
+		for (int i = 0; i < 12; i++) {
+			if (i >= 2 * data_BCDCON) {
+				data_BCDLLZ += 2;
+				continue;
+			}
 			if (BCDREG[dst][i] & 0x0F) break;
 			data_BCDLLZ++;
 			if (BCDREG[dst][i] >> 4) break;
@@ -165,7 +233,21 @@ namespace casioemu
 	}
 
 	void BCDCalc::StartMacro(uint8_t index) {
-
+		BCDMCN = data_BCDMCN + 1;
+		if (index > 0x0F) {
+			current_pgm = nullptr;
+			pgm_counter = 0;
+		}
+		else {
+			current_pgm = pgm_ptr[index];
+			pgm_counter = pgm_entry[index];
+			if (index & 8) {
+				if (BCDMCN & 0xF8) pgm_counter |= 3;
+				else if (BCDMCN & 0x04) pgm_counter |= 2;
+				else if (BCDMCN & 0x02) pgm_counter |= 1;
+			}
+		}
+		if (current_pgm != nullptr) macro_running = true;
 	}
 
 	void BCDCalc::ShiftLeft(uint8_t src, uint8_t dst, bool continuous) {
