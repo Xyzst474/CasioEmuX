@@ -1,5 +1,7 @@
 @pushd %~dp0%
 
+@windres res\version.rc -o res\resources.o
+
 @set include=-I"libs\SDL2-2.26.4\x86_64-w64-mingw32\include\SDL2" -I"libs\SDL2_image-2.6.3\x86_64-w64-mingw32\include\SDL2" -I"libs\lua-5.3.6\include" -I"libs\wineditline-2.206\include"
 
 @set compiler=%include% -Wall -pedantic -std=c++2a
@@ -16,6 +18,6 @@
 
 @set output_exe=casioemu.exe
 
-g++ %compiler% %files% %linker% -O2 -o %output_exe%
+g++ %compiler% %files% %linker% -O2 -o %output_exe% res\resources.o
 
 @popd
